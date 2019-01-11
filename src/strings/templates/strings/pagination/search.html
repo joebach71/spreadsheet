@@ -1,0 +1,14 @@
+{% load strings_extras %}
+<div class="col-sm-3">
+  <select id='filter_{{ product.category }}' name="filter_{{ product.category }}">
+    <option value=""> Search </option>
+    <option value="stringid">Id</option>
+    <option value="description1">description1</option>
+    <option value="description2">description2</option>
+    <option value="Korea">kor</option>
+    <option value="English">eng</option>
+    {% for name in publishers %}<option value="{{ name }}">{{ name | lower | firstThree }}</option>{% endfor %}
+  </select>
+  <input type="text" id="filterValue_{{ product.category }}" name="filterValue_{{ product.category }}" />
+  <button id="search_{{ product.category }}" name="search_{{ product.category }}" class="btn btn-default btn-xs">search</button>
+</div>

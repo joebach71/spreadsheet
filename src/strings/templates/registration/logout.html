@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block navi %}
+<ul class="nav navbar-top-links navbar-right">
+    <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-user">
+            {% if not user.is_authenticated %}
+            <li><a href="/login/"><i class="fa fa-user fa-fw"></i> Login</a>
+            </li>
+            {% else %}
+            <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+            </li>
+            <li class="divider"></li>
+            <li><a href="/logout/"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+            </li>
+            {% endif %}
+        </ul>
+        <!-- /.dropdown-user -->
+    </li>
+    <!-- /.dropdown -->
+</ul>
+<!-- /.navbar-top-links -->
+{% endblock navi%}
+
+{% block content %}
+<div id="page-wrapper">
+  <div class="row">
+      <div class="col-lg-12">
+          <h1 class="page-header">{{ page_title | default:"Logged Out"}}</h1>
+      </div>
+      <!-- /.col-lg-12 -->
+  </div>
+  <!-- /.row -->
+  <div class="row">
+      <div class="col-lg-12">
+          <div class="panel panel-default">
+              <div class="panel-body">
+                  <a href="/login/"> Login Again </a>
+              </div>
+          </div>
+          <!-- /.panel-default -->
+      </div>
+  </div>
+  <!-- /.row -->
+</div>
+{% endblock content %}

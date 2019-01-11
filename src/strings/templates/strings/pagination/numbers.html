@@ -1,0 +1,14 @@
+
+<div class="col-sm-6">
+    <select id='perPage_{{ product.category }}' name="perPage_{{ product.category }}">
+        <option value="100">100</option>
+        <option value="250" selected>250</option>
+        <option value="500">500</option>
+    </select>
+    <label id="page_count_{{ product.category }}"></label>
+    <label id="total_count_{{ product.category }}"></label>
+    <button disabled id="previous_{{ product.category }}" name="previous_{{ product.category }}" class="btn btn-default btn-xs">previous</button>
+    <select id="goToPage_{{ product.category }}" name="goToPage_{{ product.category }}"></select>
+    <label id="total_page_{{ product.category }}" name="total_page_{{ product.category }}"></label>
+    <button disabled id="next_{{ product.category }}" name="next_{{ product.category }}" class="btn btn-default btn-xs">next</button>
+</div>

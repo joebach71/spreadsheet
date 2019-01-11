@@ -1,0 +1,28 @@
+#ISLAND=`basename $PWD`
+ISLAND='tmw'
+VERSION=`grep "VERSION" src/languagestrings/settings.py | grep -Eo '"[0-9]+.*"' | grep -Eo '[^"]+'`
+DESCRIPTION=`grep '"description": ' src/languagestrings/settings.py \
+    | head -1 \
+    | awk -F: '{ print $2 }' \
+    | sed 's/[",]//g' \
+    | sed -e 's/^[[:space:]]*//'`
+# https://stackoverflow.com/questions/2657935/checking-for-a-dirty-index-or-untracked-files-with-git
+DIRTY_COUNT=`expr $(git status --porcelain 2>/dev/null| grep "^ M" | wc -l)`
+DIRTY_FILES=`git status --porcelain 2>/dev/null | xargs`
+BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
+VCS_URL=`git config --get remote.origin.url`
+VCS_REF=`git rev-parse --short HEAD`
+HOSTNAME=`hostname`
+
+docker build $@ \
+  --build-arg BUILD_DATE=$BUILD_DATE \
+  --build-arg VCS_URL=$VCS_URL \
+  --build-arg VCS_REF=$VCS_REF \
+  --build-arg APP_NAME=$ISLAND \
+  --build-arg APP_VERSION=$VERSION \
+  --build-arg APP_DESCRIPTION="$DESCRIPTION" \
+  --build-arg DIRTY_COUNT=$DIRTY_COUNT \
+  --build-arg DIRTY_FILES="$DIRTY_FILES" \
+  --build-arg HOSTNAME="$HOSTNAME" \
+  --no-cache \
+  -t d.sphd.io/shared/$ISLAND:$VERSION .

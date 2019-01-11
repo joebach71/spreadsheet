@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load strings_extras %}
+
+{% block head_javascript %}
+<!-- Page level plugin CSS-->
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.css' %}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block content %}
+<div id="container">
+  <div class="row">
+    <div class="col-lg-12">
+          
+    <!-- Icon Cards -->
+    <!-- Example DataTables Card-->
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <i class="fa fa-table"></i>
+          {{ data.error }}
+          {% if data.error == True %}
+          <font style="color:red;">There were errors found in import file, {{ name }}.</font>
+          <div class="pull-right">
+            <a class="btn btn-default btn-xs" href="/languagestring/">Return to Main</a>
+          </div>
+          {% else %}
+          <font style="color:black;">Confirm Changes from import file, {{ name }}.</font>
+          <div class="pull-right">
+            <button type="cancel" class="btn btn-default btn-xs" >Cancel</button>
+          </div>
+          {% endif %}
+      </div>
+      <div class="panel-body">
+        {% if data.inValid %}
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <i class="fa fa-table"></i> InValid HTML
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table name="InValidDataTable" id="InValidDataTable" class="dataTable table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Language</th>
+                    <th>IMPORTED</th>
+                    <th>PARSED</th>
+                  </tr>
+                </thead>
+                
+                {% for item in data.inValid %}
+                {% for result in item.fail %}
+                <tr>
+                  <td>{{ item.key }}</td>
+                  <td>{{ result.field }}</td>
+                  <td><pre>{{ result.imported }} </pre></td>
+                  <td><pre>{{ result.parsed.errorMessage }} - '{{ result.parsed.parsed }}'</pre></td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+    
+        {% if data.empty %}
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <i class="fa fa-table"></i> Empty Korean LocalText
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table name="emptyDataTable" id="emptyDataTable" class="dataTable table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    {% for col in columns %}
+                    {% if col.name != 'admin' %}
+                    {% if col.name != 'manager' %}
+                    <th>{{ col.name }}</th>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                  </tr>
+                </thead>
+                
+                {% for item in data.empty %}
+                <tr>
+                  <td>{{ item.key }}</td>
+                  {% for col in columns %}
+                  {% if col.name != 'admin' %}
+                  {% if col.name != 'manager' %}
+                  <td><pre>{{ item | key:col.name }} </pre></td>
+                  {% endif %}
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if data.duplicate %}
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <i class="fa fa-table"></i> Duplicated Korean LocalText
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table name="duplicatedDataTable" id="duplicatedDataTable" class="dataTable table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    {% for col in columns %}{% if col.name != 'admin' %}{% if col.name != 'manager' %}
+                    <th>{{ col.name }}</th>
+                    {% endif %}{% endif %}{% endfor %}
+                  </tr>
+                </thead>
+                
+                {% for item in data.duplicate %}
+                <tr>
+                  <td>{{ item.key }}</td>
+                  {% for col in columns %}{% if col.name != 'admin' %}{% if col.name != 'manager' %}
+                  <td><pre>{{ item | key:col.name }} </pre></td>
+                  {% endif %}{% endif %}{% endfor %}
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if data.add %}
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <i class="fa fa-table"></i> Unexpected Additional LocalTexts
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table name="addDataTable" id="addDataTable" class="dataTable table table-bordered" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                      <th>Id</th>
+                      {% for col in columns %}{% if col.name != 'manager' %} {% if col.name != 'admin' %}
+                      <th>{{ col.name }}</th>
+                      {% endif %}{% endif %}{% endfor %}
+                      </tr>
+                  </thead>
+                  
+                  {% for item in data.add %}
+                  <tr>
+                    <td>{{ item.key }}</td>
+                    {% for col in columns %}{% if col.name != 'admin' %}{% if col.name != 'manager' %}
+                    <td><pre>{{ item | key:col.name }} </pre></td>
+                    {% endif %}{% endif %}{% endfor %}
+                  </tr>
+                  {% endfor %}
+                </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+          
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <i class="fa fa-table"></i> Imported LocalTexts
+            {% if data.update %}
+            {% if data.error == True %}
+            <div class="pull-right">
+              <a class="btn btn-default btn-xs" href="/languagestring/">Return to Main</a>
+            </div>
+            {% else %}
+            <!-- update true... error not true -->
+            <div class="pull-right">
+              <a class="btn btn-default btn-xs" href="/languagestring/">Cancel</a>
+              <button type="submit" form="updateForm" class="btn btn-default btn-xs" value="Submit">Confirm Import</button>
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- all not -->
+            <div class="pull-right">
+              <a class="btn btn-default btn-xs" href="/languagestring/">Return to Main</a>
+            </div>
+            {% endif %}
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+                <table name="updateDataTable" id="updateDataTable" class="dataTable table table-bordered" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                      <th>Id</th>
+                      <th>Language</th>
+                      <th>New Value</th>
+                      <th>Old Value</th>
+                    </tr>
+                </thead>
+                {% for item in data.update %}
+                <tr>
+                  <td>{{ item.key }}</td>
+                  <td>{{ item.language }}</td>
+                  <td>{{ item.new_value }}</td>
+                  <td>{{ item.old_value }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4"><h6>No Items to Update</h6></td></tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      
+      </div>
+    </div>
+
+
+
+    </div>
+  </div>
+</div>
+<form id="updateForm" name="updateForm"
+action="/languagestring/products/{{ table.pk }}/import/confirm/" method="POST" >
+{% csrf_token %}
+{% for item in data.update %}
+<input type="hidden" name='{{ item.key }}.{{ item.language }}' value='{{ item.new_value }}' >
+{% endfor %}
+{% endblock %}
+
+{% block bodyend_javascript %}
+<!-- Page level plugin JavaScript-->
+<script src="{% static 'vendor/datatables/jquery.dataTables.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.js' %}"></script>
+<script src="{% static 'js/sb-admin-datatables.js' %}"></script>
+{% endblock %}

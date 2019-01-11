@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load strings_extras %}
+
+{% block head_javascript %}
+  <!-- handsontable CSS-->
+  <link rel="stylesheet" media="screen" href="{% static 'handsontable/handsontable.full.min.css' %}">
+{% endblock head_javascript %}
+
+{% block content %}
+<div id="container">
+  <ul class="nav nav-tabs">
+    <li class="active"><a id="Link-home" data-toggle="tab" href="#tab_home">Home</a></li>
+    {% for product in products %}
+    <li>
+      <a id="Link-{{ product.category }}" data-toggle="tab" 
+          onClick="showDataTable(this, '{{ product.pk }}', '{{ product.name }}', '{{ product.category }}')"
+          href="#tab_{{ product.category }}" >{{ product.category }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="tab-content">
+    <div id="tab_home" class="tab-pane fade">
+      <div class="panel">
+        <div class="panel-body">
+          <h3>LocalText Translation Management</h3>
+          <p>Changes you make affect all of us. May the force be with you!!!</p>
+        </div>
+      </div>
+    </div>
+    {% include 'strings/handsonTable.html' %}
+    {% include 'strings/save.html' %}
+  </div>
+</div>
+<!-- /.container -->
+
+<input type="hidden" id='page' name="page" value=""/>
+<input type="hidden" id="total" name="total" value="" />
+<input type="hidden" id='productId' name="productId" value=""/>
+<input type="hidden" id='app_name' name='app_name' value="{{ app_name }}" />
+<input type="hidden" id='tablename' name='tablename' value="" />
+
+{% endblock content %}
+
+{% block bodyend_javascript %}
+<!-- Datatables Javascript -->
+<!-- handsontable Javascript -->
+<script src="{% static 'handsontable/handsontable.full.min.js' %}"></script>
+<script>
+
+{% include 'strings/js/commonFunction.js' %}
+
+$.ajaxSetup({
+  beforeSend: function(xhr, settings) {
+    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+      // Only send the token to relative URLs i.e. locally.
+      xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    }
+  }
+});
+
+$(document).ready(function() {
+  {% include 'strings/js/handsonTables.js' %}
+  
+  showTab(document.getElementById('tab_home'));
+});
+</script>
+{% endblock bodyend_javascript %}

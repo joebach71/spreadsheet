@@ -1,0 +1,102 @@
+{% load staticfiles %}
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>{% block title %}LocalText Translation Management{% endblock title %}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css">
+        {% block head_javascript %}{% endblock head_javascript %}
+        <!-- Bootstrap Core CSS -->
+        <link href="{% static "bower_components/bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet">
+        <!-- Custom Fonts -->
+        <link href="{% static "bower_components/font-awesome/css/font-awesome.min.css" %}" rel="stylesheet" type="text/css">
+        <!-- Custom CSS -->
+        <link href="{% static "css/sb-admin-2.css" %}" rel="stylesheet">
+    </head>
+    
+    <body class="index">
+        <!-- Navigation -->
+	    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top navbar-custom">
+	        <div class="container">
+	            <!-- Brand and toggle get grouped for better mobile display -->
+	            <div class="navbar-header page-scroll">
+	                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+	                    <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
+	                </button>
+                    <a class="navbar-brand" href="/">{{ SiteHeader | default:"Translation Management"}}</a>
+	            </div>
+	
+                {% block navi %}
+	            <!-- Collect the nav links, forms, and other content for toggling -->
+	            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+	                <ul class="nav navbar-nav navbar-right">
+	                    <li class="hidden">
+	                        <a href="#page-top"></a>
+	                    </li>
+	                    <!-- 
+	                    <li class="page-scroll">
+	                        <a href="#portfolio">Portfolio</a>
+	                    </li>
+	                     -->
+		                <li class="dropdown">
+		                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+		                        <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+		                    </a>
+		                    <ul class="dropdown-menu dropdown-user">
+                            <li><a href="/{{ product }}/history/"><i class="fa fa-history fa-fw"></i> History</a>
+                            </li>
+		                        {% if not user.is_authenticated %}
+		                        <li><a href="/login/"><i class="fa fa-user fa-fw"></i> Login</a>
+		                        </li>
+		                        {% else %}
+		                        <li><a href="/logout/"><i class="fa fa-sign-out fa-fw"></i> Logout {{ user.username }}</a>
+                                </li>
+		                        {% endif %}
+		                    </ul>
+		                    <!-- /.dropdown-user -->
+                   </li>
+                         <!-- /.dropdown -->
+	                </ul>
+	            </div>
+	            <!-- /.navbar-collapse -->
+	            {% endblock navi %}
+	        </div>
+	        <!-- /.container-fluid -->
+	    </nav>
+        <div >
+            {% block page_header %}
+            <!-- Header -->
+            <header>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            {% comment %} <img class="img-responsive" src="{% static "img/profile.png" %}" alt=""> {% endcomment %}
+                            <div class="intro-text">
+                                <span class="name">{{ page_title | default:"LocalText Management WebTool"}}</span>
+                                <hr class="star-light">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+    
+            {% endblock page_header %}
+            {% block content %}{% endblock content %}
+        </div>
+        <!-- jQuery -->
+        <script src="{% static "bower_components/jquery/dist/jquery.min.js" %}"></script>
+    
+        <!-- Bootstrap Core JavaScript -->
+        <script src="{% static "bower_components/bootstrap/dist/js/bootstrap.min.js" %}"></script>
+    
+        <!-- Custom Theme JavaScript -->
+        <script src="{% static "js/sb-admin-2.js" %}"></script>
+        {% block footer %}
+        {% endblock footer %}
+        {% block bodyend_javascript %}{% endblock bodyend_javascript %}
+    </body>
+</html>

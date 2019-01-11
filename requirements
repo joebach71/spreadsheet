@@ -1,0 +1,25 @@
+Django<1.9
+django-import-export
+openpyxl
+gunicorn
+psycopg2-binary
+django-simple-history==1.9.0
+# html validation
+pytidylib
+# diff dict
+deepdiff
+
+# extend admin site templates
+django-apptemplates
+
+# add rest framework
+djangorestframework==3.6.3
+django-filer>=1.2
+django-filter==1.0.3
+markdown
+
+# process title
+setproctitle
+
+# integrate svn
+svn

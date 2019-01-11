@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head_javascript %}
+{% endblock head_javascript %}
+
+{% block content %}
+
+<div id="page-wrapper">
+  <div class="row">
+      <div class="col-lg-12">
+          <h1 class="page-header">{{ page_title | default:"Publisher Webforms"}}</h1>
+      </div>
+      <!-- /.col-lg-12 -->
+  </div>
+  <!-- /.row -->
+  <div class="row">
+      <div class="col-lg-12">
+          <div class="panel panel-default">
+              <div class="panel-heading">
+                  Publisher Notification
+              </div>
+              <!-- /.panel-heading -->
+              <div class="panel-body">
+              <span>Please aware this is still beta testing</span>
+              </div>
+              <!-- /.panel-body -->
+          </div>
+          <!-- /.panel -->
+      </div>
+      <!-- /.col-lg-12 -->
+  </div>
+  <!-- /.row -->
+</div>
+{% endblock content %}
+
+{% block bodyend_javascript %}
+<script>
+$(document).ready(function() {
+    // Setup - add a text input to each footer cell
+});
+</script>
+{% endblock bodyend_javascript %}
+
+
+  

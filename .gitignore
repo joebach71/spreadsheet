@@ -1,0 +1,13 @@
+help
+*.pyc
+.project
+.pydevproject
+static/admin/**
+static/rest_framework/**
+static/import_export/**
+src/strings/migrations
+src/svn_manager/migrations
+data/
+settings.json
+src/static/**
+pgdata/**

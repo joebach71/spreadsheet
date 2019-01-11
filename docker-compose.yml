@@ -1,0 +1,33 @@
+version: '2'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: d.sphd.io/shared/tmw:dev
+    # entrypoint: python manage.py test --noinput
+    volumes:
+      # - ./data/svn/:/data/svn/
+      - ./data/uploads/:/data/uploads/
+      - ./src/:/opt/webapp/
+      - ./static/:/opt/static/
+    ports:
+      - "8030:8030"
+    environment:
+      - DEBUG_LOG_LEVEL=true
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:9-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USERNAME: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data

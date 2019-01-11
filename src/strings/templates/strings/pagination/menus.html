@@ -1,0 +1,21 @@
+<div class="col-sm-3">
+  <label><input id="all_{{ product.category }}" name="status_{{ product.category }}" value="all" type="radio" />&nbsp;All&nbsp;</label>
+  <label><input id="unmodified_{{ product.category }}" name="status_{{ product.category }}" value="unmodified" type="radio" />&nbsp;Unmodified&nbsp;</label>
+  <label><input id="untranslated_{{ product.category }}" name="status_{{ product.category }}" value="untranslated" type="radio" />&nbsp;Untranslated&nbsp;</label>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+      Actions
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu pull-right" role="menu">
+      <li><a id="export_xlsx_{{ product.category }}" href="javascript:void(0)" localtext>&nbsp;Export XLSX Workbook</a>
+      <li hidden><a id="download" ></a></li>
+      <li class="divider"></li>
+      <li><a id="import_{{ product.category }}" name="import_{{ product.category }}"
+          data-toggle="modal" data-target="#importModal{{ product.pk }}">&nbsp;Import Excel XLSX</a></li>
+      <li class="divider"></li>
+      <li><a onClick="save(this, '{{product.pk}}', '{{product.name}}','{{product.category}}')" 
+          id="save_{{ product.category }}" name="save_{{ product.category }}">&nbsp;Save Changes</a></li>
+    </ul>
+  </div>
+</div>

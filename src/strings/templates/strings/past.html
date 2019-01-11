@@ -1,0 +1,832 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load strings_extras %}
+
+{% block head_javascript %}
+    <!-- handsontable CSS-->
+    <link rel="stylesheet" media="screen" href="{% static 'handsontable-master/dist/handsontable.full.css' %}">
+{% endblock head_javascript %}
+
+
+{% block page_header %}
+
+<!-- Header -->
+<header>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <img class="img-responsive" src="img/profile.png" alt="">
+                <div class="intro-text">
+                    <span class="name">{{ page_title|default:"Language String Management" }}</span>
+                    <hr class="star-light">
+                    <span class="skills" id="title">{{ title|default:"Publisher Translation Form" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock page_header %}
+
+{% block content %}
+
+<div id="container">
+    <div class="row" id="mainPanel">
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="fa fa-database fa-fw"></i> Language Strings
+                    <div class="pull-right">
+                        <label><input id="untranslated" type="checkbox" >Untranslated</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                Exports
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu pull-right" role="menu">
+                                <li><a id="export_xlsx" href="/{{ product }}/past/{{ days }}/export/xlsx/" download>XLSX Workbook</a>
+                                <!--
+                                <li class="divider"></li>
+                                {% for publisher in publishers %}{% if publisher.name != 'admin' %}<li><a id="json_{{ publisher.name }}" href="#" onclick="downloadJSON(this, '{{ publisher.name }}')">JSON {{ publisher.name }}</a>
+                                </li>{% endif %}{% endfor %}
+                                <li hidden><a id="download" href="" download=""></a></li>
+                                <li class="divider"></li>
+                                {% for publisher in publishers %}{% if publisher.name != 'admin' %}<li><a id="cdn_{{ publisher.name }}" href="#" onclick="downloadCDN(this, '{{ publisher.name }}')">CDN {{ publisher.name }}</a>
+                                </li>{% endif %}{% endfor %}
+                                -->
+                            </ul>
+                        </div>
+                        <button type="button" id="save" name="save" class="btn btn-default btn-xs">Save</button>
+                    </div>
+                </div>
+                <!-- /.panel-heading -->
+                <div id="edit" class="panel-body">
+              	    <div class="pagination">
+        			    <span class="step-links">
+                            <font>Show: </font>
+                            <select id='perPage' name="perPage">
+                                {% if perPage %}
+                                    {% if perPage == "100" %}
+                                <option value="50">50</option>
+                                <option value="100" selected>100</option>
+                                <option value="250">250</option>
+                                <option value="500" selected>500</option>
+                                    {% elif perPage == "250" %}
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="250" selected>250</option>
+                                <option value="500">500</option>
+                                    {% elif perPage == "500" %}
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="250">250</option>
+                                <option value="500" selected>500</option>
+                                    {% else %}
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="250">250</option>
+                                <option value="500">500</option>
+                                    {% endif %}
+                                {% else %}
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="250">250</option>
+                                <option value="500">500</option>
+                                {% endif %}
+                            </select>
+                            <font> entries from </font><font id="totalEntries">{{ totalEntries }}.</font>
+                            <button disabled id="previous" name="previous" class="btn btn-default"">previous</button>
+                        
+                            <span class="current" id="current">
+                                Page {{ page.number }} of {{ page.paginator.num_pages }}.
+                            </span>
+                    
+                            <button disabled id="next" name="next" class="btn btn-default">next</button>
+                            <span>
+                                Goto Page:&nbsp;
+                                <select id="goToPage" name="goToPage">
+                                    <option value=""> --- </option>
+                                </select>
+                            </span>
+                            <select id='filter' name="filter">
+                                <option value="">[ Key ]</option>
+                                <option value="stringid">String ID</option>
+                                <option value="description1">Description1</option>
+                                <option value="description2">Description2</option>
+                                <option value="Korea">Korean</option>
+                                <option value="English">English</option>
+                                {% for publisher in publishers %}{% if publisher.name != 'Korea' %}{% if publisher.name != 'English' %}
+                                <option value="{{ publisher.name }}">{{ publisher.name }}</option>
+                                {% endif %}{% endif %}{% endfor %}
+                            </select>
+                            <input type="text" id="filterValue" />
+
+                            <!-- past changes -->
+                            <span>
+                              Past English Changes
+                              <select id="days" name="days">
+                                <option></option>
+                                {% for i in 31|range %}{% if i != 0 %}{% if days == i %}<option value="{{ i }}" selected >{{ i }}</option>
+                                {% else %}<option value="{{ i }}">{{ i }}</option>{% endif %}{% endif %}{% endfor %}
+                              </select>
+                              <input type="hidden" id="language" name="language" value="{{ language|capfirst }}" />
+                            </span>
+        			    </span>
+        			</div>
+    			    <!-- /.pagination -->
+                    <div id="handsonTable" class="hot handsontable" hidden></div>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+
+    <div class="row" id="badHtmlPanel" hidden>
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="fa fa-database fa-fw"></i> Unable to parsed into HTML - Will not be saved!
+                </div>
+                <!-- /.panel-heading -->
+                <div id="edit" class="panel-body">
+                    <div id="badHtmlHandsonTable" class="hot handsontable" hidden></div>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+    
+    <div class="row" id="confirmPanel" hidden>
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="fa fa-database fa-fw"></i> Change Reviews
+                    <div class="pull-right">
+                        <button type="button" id="confirm" name="confirm" class="btn btn-default btn-xs" >Confirm</button>
+                        <!-- <button type="button" id="reset" name="reset" class="btn btn-default btn-xs" >Reset</button> -->
+                        <a id="cancel" name="cancel" class="btn btn-default btn-xs" href="/{{ product }}/">Cancel</a>
+                    </div>
+                </div>
+                <!-- /.panel-heading -->
+                <div id="edit" class="panel-body">
+                    <div id="confirmHandsonTable" class="hot handsontable" hidden></div>
+                </div>
+                <!-- /.panel-body -->
+              </div>
+          <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+
+    <div class="row" id="savedPanel" hidden>
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="fa fa-database fa-fw"></i> Review Saved
+                    <div class="pull-right">
+                        <a id="return" name="return" class="btn btn-default btn-xs" href="/{{ product }}/past/{{ days }}/language/{{ language|capfirst }}/">Back to Main</a>
+                    </div>
+                </div>
+                <!-- /.panel-heading -->
+                <div id="edit" class="panel-body">
+                    <div id="savedHandsonTable" class="hot handsontable" hidden></div>
+                </div>
+                <!-- /.panel-body -->
+              </div>
+          <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+
+    <div class="row" id="notSavedPanel" hidden>
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="fa fa-database fa-fw"></i> Review NOT Saved
+                </div>
+                <!-- /.panel-heading -->
+                <div id="edit" class="panel-body">
+                    <div id="notSavedHandsonTable" class="hot handsontable" hidden></div>
+                </div>
+                <!-- /.panel-body -->
+              </div>
+          <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+</div>
+<input type="hidden" id='page' name="page" value="{{ page.number }}"/>
+<input type="hidden" id="total" name="total" value="{{ page.paginator.num_pages }}" />
+
+{% csrf_token %}
+
+{% endblock content %}
+
+{% block bodyend_javascript %}
+<!-- Datatables Javascript -->
+<!-- handsontable Javascript -->
+<script src="{% static 'handsontable-master/dist/handsontable.full.js' %}"></script>
+<script>
+$(document).ready(function() {
+	var $$ = function(id) {
+        return document.getElementById(id);
+      },
+      title = $$('title'),
+      // handson tables
+      handsonTable = $$('handsonTable'),
+      confirmHandsonTable = $$('confirmHandsonTable'),
+      badHtmlHandsonTable = $$('badHtmlHandsonTable'),
+      savedHandsonTable = $$('savedHandsonTable'),
+      notSavedHandsonTable = $$('notSavedHandsonTable'),
+      // panels
+      mainPanel = $$('mainPanel'),
+      confirmPanel = $$('confirmPanel'),
+      badHtmlPanel = $$('badHtmlPanel'),
+      savedPanel = $$('savedPanel'),
+      notSavedPanel = $$('notSavedPanel'),
+      // autosave = $$('autosave'),
+      current = $$('current'),
+      next = $$('next'),
+      previous = $$('previous'),
+      goToPage = $$('goToPage'),
+      perPage = $$('perPage'),
+      page = $$('page'),
+      total = $$('total'),
+      filter = $$('filter'),
+      filterValue = $$('filterValue'),
+      untranslated = $$('untranslated'),
+      totalEntries = $$('totalEntries'),
+      save = $$('save'),
+      confirm = $$('confirm'),
+      cancel = $$('cancel'),
+      // autosaveNotification,
+      data,
+      confirmed,
+      hot,
+      hotConfirm,
+      htmlValidator,
+      NoEndSpaceValidator,
+      AllCapRequired,
+      // history constants
+      days = $$('days'),
+      language = $$('language');
+    
+    var data = {};
+    function editedCellRenderer(instance, td, row, col, prop, value, cellProperties) {
+        Handsontable.renderers.TextRenderer.apply(this, arguments);
+        td.style.color = 'red';
+    };
+    Handsontable.renderers.registerRenderer('editedCellRenderer', editedCellRenderer);
+    
+    function emptyCellRenderer(instance, td, row, col, prop, value, cellProperties) {
+        Handsontable.renderers.TextRenderer.apply(this, arguments);
+        if (!value || value === '') {
+            td.style.background = '#EEE';
+        }
+    };
+    function ModifiedFieldRenderer(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.TextRenderer.apply(this, arguments);
+      td.style.fontWeight = 'bold';
+      td.style.color = 'green';
+      td.style.background = '#CEC';
+    }
+    Handsontable.renderers.registerRenderer('emptyCellRenderer', emptyCellRenderer);
+    var hot = new Handsontable(handsonTable, {
+      colHeaders: ['String ID', 'Description1', 'Description2', '{{ language|capfirst }}', '{{ language|capfirst }}_modified_at'
+      {% for publisher in publishers %}{% if publisher.name != language|capfirst %}{% if publisher.name != 'admin' %}
+      , '{{ publisher.name }}'{% endif %}{% endif %}{% endfor %}],
+      rowHeaders: true,
+      contextMenu: ['undo'],
+      manualColumnResize: [300, 100, 100, 500, 200, {% for publisher in publishers %},{% if publisher.name != '{{ language|capfirst }}' %}{% if publisher.name != 'admin' %}500{% endif %}{% endif %}{% endfor %}], 
+      manualRowResize: true,
+      fixedColumnsLeft: 1,
+      height: 600,
+      preventOverflow: 'both',
+      // preventOverflow: 'horizontal',
+      currentRowClassName: 'currentRow',
+      cells: function (row, col, prop) {
+        var cellProperties = {};
+        if (col > 2) {
+          cellProperties.renderer = "emptyCellRenderer";
+        }
+        // Allow to display column searched
+        if (prop === 'fields.{{ language|capfirst }}') {
+          cellProperties.renderer = ModifiedFieldRenderer;
+        }
+        return cellProperties;
+      },
+      columns: [
+    	  {
+    		  data: 'pk',
+    		  readOnly: true,
+    	  },
+    	  {
+    		  data: 'fields.description1',
+            {% if not editDesc %}readOnly: true{% endif %}
+    	  },
+    	  {
+    		  data: 'fields.description2',
+            {% if not editDesc %}readOnly: true{% endif %}
+    	  },
+        {
+          data: 'fields.{{ language|capfirst }}',
+          readOnly: true
+        },
+        {
+          data: 'fields.{{ language|capfirst }}_modified_at',
+          readOnly: true
+        }
+        {% for publisher in publishers %}{% if publisher.name != language|capfirst %}{% if publisher.name != 'admin' %}
+        ,{
+          data: 'fields.{{ publisher.name }}',
+        }
+        {% endif %}{% endif %}{% endfor %}
+        
+      ],
+      afterChange: function (change, source) {
+        if (source === 'loadData') {
+          return; //don't save this change
+        }
+        if (change != null) {
+            var instance = this;
+            $(change).each(function () {
+                // change the color of edited cell
+                var cell = instance.getCell(this[0], instance.propToCol(this[1]));
+                cell.style.color = 'red';
+                
+                // replace the row with stringid
+                var stringid = instance.getDataAtCell(this[0], 0);
+                this[0] = stringid;
+                if (this[2] === this[3]) {
+                    return; // don't do anything is no change
+                }
+                // console.log(this[0]);
+                if (data[stringid+'.'+this[1]]) {
+                    this[2] = data[stringid+'.'+this[1]]['before'];
+                }
+                // change the color of cell???
+                data[stringid+'.'+this[1]] = { 'stringid': this[0], 'field': this[1], 'before': this[2], 'after': this[3] };
+            });
+            // clearTimeout(autosaveNotification);
+            // console.log(JSON.stringify(data));
+        }
+      }
+    });
+
+    hotSavedTable = new Handsontable(savedHandsonTable, {
+      colHeaders: ['String ID', 'Field', 'Before', 'After'],
+      rowHeaders: true,
+      manualColumnResize: [300, 100, 100, 500, 500],
+      manualRowResize: true,
+      fixedColumnsLeft: 1,
+      stretchH: 'last',
+      preventOverflow: 'horizontal',
+      currentRowClassName: 'currentRow',
+      columns: [
+          {
+              data: 0,
+              readOnly: true,
+          },
+          {
+              data: 1,
+              readOnly: true,
+          },
+          {
+              data: 2,
+              readOnly: true,
+          },
+          {
+              data: 3,
+              readOnly: true,
+          },
+      ]
+    });
+
+    hotNotSavedTable = new Handsontable(notSavedHandsonTable, {
+      colHeaders: ['String ID', 'Field', 'Before', 'After', 'Errors'],
+      rowHeaders: true,
+      manualColumnResize: [300, 100, 100, 500, 500],
+      manualRowResize: true,
+      fixedColumnsLeft: 1,
+      stretchH: 'last',
+      preventOverflow: 'horizontal',
+      currentRowClassName: 'currentRow',
+      columns: [
+          {
+              data: 0,
+              readOnly: true,
+          },
+          {
+              data: 1,
+              readOnly: true,
+          },
+          {
+              data: 2,
+              readOnly: true,
+          },
+          {
+              data: 3,
+              readOnly: true,
+          },
+          {
+              data: 4,
+              readOnly: true,
+          },
+      ]
+    });
+    
+    hotBadHtml = new Handsontable(badHtmlHandsonTable, {
+      colHeaders: ['String ID', 'Field', 'Before', 'After'],
+      rowHeaders: true,
+      manualColumnResize: true,
+      manualRowResize: true,
+      fixedColumnsLeft: 1,
+      stretchH: 'last',
+      preventOverflow: 'horizontal',
+      currentRowClassName: 'currentRow',
+      columns: [
+          {
+              data: 'stringid',
+              readOnly: true,
+          },
+          {
+              data: 'field',
+              readOnly: true,
+          },
+          {
+              data: 'before',
+              readOnly: true,
+          },
+          {
+              data: 'after',
+              readOnly: true,
+          },
+      ]
+    });
+    
+    hotConfirm = new Handsontable(confirmHandsonTable, {
+      colHeaders: ['String ID', 'Field', 'Before', 'After'],
+      rowHeaders: true,
+      manualColumnResize: true,
+      manualRowResize: true,
+      fixedColumnsLeft: 1,
+      preventOverflow: 'horizontal',
+      stretchH: 'last',
+      currentRowClassName: 'currentRow',
+      columns: [
+          {
+              data: 'stringid',
+              readOnly: true,
+          },
+          {
+              data: 'field',
+              readOnly: true,
+          },
+          {
+              data: 'before',
+              readOnly: true,
+          },
+          {
+              data: 'after',
+          },
+      ],
+      afterChange: function (change, source) {
+        if (source === 'loadData') {
+          return; //don't save this change
+        }
+        if (change != null) {
+            var instance = this;
+            // if there are multiple changes, then I must get all its stringids
+            
+            $(change).each(function () {
+                // change the color of edited cell
+                var cell = instance.getCell(this[0], instance.propToCol(this[1]));
+                cell.style.color = 'red';
+                
+                // replace the row with stringid
+                var stringid = instance.getDataAtCell(this[0], 0);
+                this[0] = stringid;
+                if (this[2] === this[3]) {
+                    return; // don't do anything is no change
+                }
+                // console.log(this[0]);
+                if (data[stringid+'.'+this[1]]) {
+                    this[2] = data[stringid+'.'+this[1]]['before'];
+                }
+                // change the color of cell???
+                data[stringid+'.'+this[1]] = { 'stringid': this[0], 'field': this[1], 'before': this[2], 'after': this[3] };
+            });
+            // clearTimeout(autosaveNotification);
+            // console.log(JSON.stringify(data));
+        }
+      }
+    });
+    function getConditions(change) {
+        var inputs = {};
+        // entries
+        inputs['perPage'] = perPage.value;
+        // page
+        inputs['page'] = page.value;
+        // total_page
+        inputs['total'] = total.value;
+        // goto page
+        inputs['goToPage'] = goToPage.value;
+        // filter key
+        inputs['filter'] = filter.value; 
+        // filter pattern
+        inputs['pattern'] = filterValue.value;
+        // only untranslated filter
+        inputs['untranslated'] = untranslated.checked;
+        // console.info(JSON.stringify(inputs));
+        inputs['days'] = days.value;
+        inputs['language'] = language.value;
+        return inputs;
+    }
+    
+    function setConditions(data) {
+        console.info(JSON.stringify(data));
+        // entries
+        perPage.value = data['perPage'];
+        // page
+        page.value = data['page'];
+        // total_page
+        total.value = data['total'];
+        current.value = data['page'] + " of " + data['total'];
+        // goto page
+        goToPage.value = data['goToPage'];
+        
+    }
+    
+    var xhr;
+    var active=false;
+	function loadLanguageStrings(data, callback) {
+	  console.log("Input: ", JSON.stringify(data));
+	  var urlPath = '/{{ product }}/api/changes/language/{{ language|capfirst }}/';
+	  // console.log("URLPath: ", urlPath);
+	  if(active) { console.log("killing active"); xhr.abort(); }
+	  active = true;
+      xhr = $.getJSON(urlPath, data, function(result) {
+    	    active=false;
+    	    if (result != null) {
+    	          // console.log(JSON.stringify(result.data));
+                $(mainPanel).prop('hidden', false);
+                $(handsonTable).prop('hidden', false);
+        	    	hot.loadData(JSON.parse(result.data));
+   	       	    // update current page
+   	       	    current.innerText = 'Page '+result.current+' of '+result.total+ '.';
+   	       	    page.value = result.current;
+   	       	    perPage.value = result.perPage;
+   	       	    totalEntries.innerText = result.totalEntries;
+   	       	    // update goToPage
+                var options = "";
+                for (i = 1; i <= result.total; i++) {
+                    if (i === parseInt(result.current)) {
+                        options += '<option value="'+i+'" selected>'+i+'</option>';
+                    } else {
+                        options += '<option value="'+i+'">'+i+'</option>';
+                    }
+                }
+                goToPage.innerHTML = options;
+     	        // update next page
+     	        if (result.previous) {
+     	        	previous.disabled = false;
+     	        } else {
+     	        	previous.disabled = true;
+     	        }
+     	        // update previous page
+     	        if (result.next) {
+     	        	next.disabled = false;
+     	        } else {
+     	        	next.disabled = true;
+     	        }
+    	    	callback && callback(result);
+    	    } else {
+    	    	callback && callback(null);
+    	    }
+      });
+	}
+
+    // export links
+    function setFilteredExportHref(data) {
+        // console.log("data: ", data['filter'], " - ", data['pattern']);
+        var link = $('#export_xlsx');
+        var href = '/{{ product }}/export/xlsx/';
+        if (! data['filter']) {
+            // reset download url
+            link.attr('href', href);
+            // no filtering
+            // link.prop('hidden', true);
+            // console.log("reset filter export href: ", link.attr('href'));
+            return;
+        }
+        if (data['pattern'] == "") {
+            link.attr('href', href);
+            // link.prop('hidden', true);
+            // console.log("reset filter export href: ", link.attr('href'));
+            return;
+        }
+        href = href + 'filter/' + data['filter'] + '/pattern/' + data['pattern'] + '/';
+        if (data['untranslated']) {
+            href += '?untranslated=true';
+        }
+        link.attr('href', href);
+        // link.prop('hidden', false);
+        // console.log('created href: ', href);
+        // console.log("filter export href: ", link.attr('href'));
+    }
+    
+    $(filterValue).on('keyup change', function() {
+        // console.info("FilterValue text entered");
+        var data = getConditions();
+        setFilteredExportHref(data);
+        loadLanguageStrings(data);
+    });
+    
+    $(filter).on('change', function() {
+        var filter = $(this).val();
+        var input = $('input#filterValue');
+        if (filter === "") {
+            input.val('');
+            input.prop('disabled', true);
+        } else {
+            input.prop('disabled', false);
+        }
+        var data = getConditions();
+        setFilteredExportHref(data);
+        loadLanguageStrings(data);
+    });
+    // untranslated filtering
+    $('#untranslated').change( function() {
+        // get translated only
+        var data = getConditions();
+        setFilteredExportHref(data);
+        loadLanguageStrings(data);
+    });
+    $(next).click( function() {
+      // console.info("Next Button Clicked");
+      var data = getConditions();
+      data['page'] = parseInt(data['page']) + 1;
+      loadLanguageStrings(data);
+    });
+    Handsontable.Dom.addEvent(previous, 'click', function() {
+       // console.info("Previous Button Clicked");
+       var data = getConditions();
+       data['page'] = parseInt(data['page']) - 1;
+       loadLanguageStrings(data);
+     });
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                // Only send the token to relative URLs i.e. locally.
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+    });
+    
+    $(save).click(function () {
+        // save all cell's data
+        $.ajax({
+            url : '/{{ product }}/confirm/',
+            type: 'POST',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            beforeSend: function(xhr, settings) {
+                $.ajaxSettings.beforeSend(xhr, settings);
+            },
+            success: function (results) {
+                // update page loads
+                // 1. hide main panel
+                $(mainPanel).prop('hidden', true);
+                $(handsonTable).prop('hidden', true);
+                // 2. update page header
+                $(title).html("Translation Update Confirmation Page");
+                // 3. show confirm panel
+                $(confirmPanel).prop('hidden', false);
+                $(confirmHandsonTable).prop('hidden', false);
+                hotConfirm.loadData(results.data);
+                // console.log('success:' + JSON.stringify(results.data));
+                // if error is there
+                $(badHtmlPanel).prop('hidden', false);
+                $(badHtmlHandsonTable).prop('hidden', false);
+                hotBadHtml.loadData(results.error);
+                // console.log('error:' + JSON.stringify(results.error));
+            },
+            error: function(e) {
+                alert("Error: " + e.statusText);
+                e.preventDefault();
+            }
+        });
+    });
+    
+    Handsontable.Dom.addEvent(confirm, 'click', function() {
+        // save all cell's data
+        $.ajax({
+            url : '/{{ product }}/save/',
+            type: 'POST',
+            data: JSON.stringify(hotConfirm.getData()),
+            "beforeSend": function(xhr, settings) {
+                $.ajaxSettings.beforeSend(xhr, settings);
+            },
+            success: function (results) {
+                //console.log(JSON.stringify(results));
+                // update page loads
+                // 1. hide main panel
+                $(mainPanel).prop('hidden', true);
+                $(handsonTable).prop('hidden', true);
+                $(confirmPanel).prop('hidden', true);
+                $(confirmHandsonTable).prop('hidden', true);
+                $(badHtmlPanel).prop('hidden', true);
+                $(badHtmlHandsonTable).prop('hidden', true);
+                // 2. update page header
+                $(title).html("Saved Reviews");
+                // 3. show saved panel
+                $(savedPanel).prop('hidden', false);
+                hotSavedTable.loadData(results.saved);
+                $(savedHandsonTable).prop('hidden', false);
+                // 4. show not Saved Panel
+                $(notSavedPanel).prop('hidden', false);
+                hotNotSavedTable.loadData(results.notSaved);
+                $(notSavedHandsonTable).prop('hidden', false);
+                // console.log('saved:' + JSON.stringify(results.saved));
+                //console.log('not saved:' + JSON.stringify(results.notSaved));
+            },
+            /*
+            success: function (results) {
+                console.log('success:' + results);
+                // redirect
+                $( function() {
+                    // alert success
+                    $("<p>Successfully Saved!</p>").dialog();
+                });
+                window.location.replace("/{{ product }}/");
+            },
+            */
+            error: function(error) {
+                alert("Error: " + error.statusText);
+                error.preventDefault();
+            }
+        });
+    });
+    $('#goToPage').on('change', function() {
+        var newPage = $(this).val();
+        var data = getConditions();
+        // console.log("Page: ", data['page'], " New Page: ", data['goToPage']);
+        data['page'] = data['goToPage'];
+        loadLanguageStrings(data);
+    });
+    // Change Per Page Count
+    $(perPage).change( function () {
+    	var data = getConditions();
+    	loadLanguageStrings(data);
+    });
+	  
+    $(days).on('change', function() {
+      var data = getConditions();
+      loadLanguageStrings(data);
+    });
+    
+    
+  	// defaul upload
+  	loadLanguageStrings(getConditions(), function(result) {
+          // set filters for export
+          var input = $('input#filterValue');
+          if (filter.value === "") {
+              input.val('');
+              input.prop('disabled', true);
+          } else {
+              input.prop('disabled', false);
+              setFilteredExportHref(getConditions());
+          }
+      });
+  	
+});
+</script>
+{% endblock bodyend_javascript %}
+
+
+  

@@ -1,0 +1,20 @@
+{% load strings_extras %}
+{% for product in products %}
+<div id="tab_{{ product.category }}" class="tab-pane fade">
+  <div class="panel">
+    <div class="panel-body">
+      <div class="row">
+        {% include 'strings/pagination/numbers.html' %}
+        {% include 'strings/pagination/search.html' %}
+        {% include 'strings/pagination/menus.html' %}                   
+      </div>
+      <div id="handsonTable_{{ product.category }}" class="hot handsontable" ></div>
+      <!-- /.Model -->
+      {% include 'strings/modal.html' %}
+    </div>
+    <!-- /.panel-body -->
+  </div>
+  <!-- /.panel -->
+</div>
+<!-- /.tab-pane -->
+{% endfor %}
