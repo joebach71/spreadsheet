@@ -4,10 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: d.sphd.io/shared/tmw:dev
-    # entrypoint: python manage.py test --noinput
+    image: d.sphd.io/shared/spreadsheet:dev
     volumes:
-      # - ./data/svn/:/data/svn/
       - ./data/uploads/:/data/uploads/
       - ./src/:/opt/webapp/
       - ./static/:/opt/static/
