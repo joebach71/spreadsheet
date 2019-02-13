@@ -1,6 +1,5 @@
 ### Development Installation
 django-admin startproject languagestrings
-cd languagestrings
 sudo docker-compose up -d
 sudo docker exec -it web_1 python manage.py startapp strings
 sudo chown -R $USER:$USER .
@@ -13,3 +12,4 @@ sudo chown -R $USER:$USER .
 	docker exec -it languagestrings_web_1 python manage.py createsuperuser
 2. Create Group with WebApp via Admin
 3. Import any gaap data using import from Web
+

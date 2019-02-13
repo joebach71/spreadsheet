@@ -313,10 +313,12 @@ def confirm(request, pk):
     '''
     Process all parameters
     '''
+    tablename = "{}_{}".format(document.name, document.category)
     # Always return an HttpResponseRedirect after successfully dealing
     # with POST data. This prevents data from being posted twice if a
     # user hits the Back button.
     saved = []
+    reset = []
     notSaved = []
     notFound = []
     logger.info('Confirmed Raw data: "%s"' % request.body.decode("utf-8"))
@@ -327,25 +329,37 @@ def confirm(request, pk):
         before = item[2]
         after = item[3]
         try:
-            languagestring = PRODUCTS["{0}_{1}".format(document.name, document.category)].objects.get(pk=stringid)
+            languagestring = PRODUCTS[tablename].objects.get(pk=stringid)
             stored = getattr(languagestring, attribute)
-            if (stored == before):
+            if type(stored) == datetime.datetime:
+                after = timezone.now();
+                item[3] = '{}'.format(after)
+                try:
+                    setattr(languagestring, attribute, after)
+                    languagestring.save()
+                    # confirmation
+                    reset.append(item)
+                except Exception as e:
+                    logger.error('Unabled to Save "{}", "{}"'.format(item,e))
+                    item.append(str(e))
+                    notSaved.append(item)
+            elif (stored == before):
                 setattr(languagestring, attribute, after)
                 try:
                     languagestring.save()
                     # confirmation
                     saved.append(item)
                 except Exception as e:
-                    logger.error('Unabled to Save "{0}", "{1}"'.format(item,e))
+                    logger.error('Unabled to Save "{}", "{}"'.format(item,e))
                     item.append(str(e))
                     notSaved.append(item)
             else:
                 # field value has been changed... must be verified
-                logger.error('Database value has changed from previous. expected:{0}::stored:{1}'.format(before, stored))
-                item.append("Current Server Data is different from before data - " + stored)
+                logger.error('Database value has changed from previous. expected:{}::stored:{}'.format(before, stored))
+                item.append('Current Server Data is different from before data - {}'.format(stored))
                 notSaved.append(item)
-        except (KeyError, PRODUCTS["{0}_{1}".format(document.name, document.category)].DoesNotExist) as e:
-            logger.error('Unable to retrieve record:{0}'.format(e))
+        except (KeyError, PRODUCTS[tablename].DoesNotExist) as e:
+            logger.error('Unable to retrieve record:{}'.format(e))
             item.append(e)
             notFound.append(item)
     if (len(notSaved)):
@@ -359,11 +373,11 @@ def confirm(request, pk):
     #print svnMgr.diff()
     context = {
         'saved': saved,
+        'reset': reset,
         'notSaved': notSaved,
         'notFound': notFound,
         'returncode': returncode,
         'product': pk,
-        # 'diff': svnMgr.diff(),
     }
     return HttpResponse(json.dumps(context), content_type="application/json")
 
@@ -393,6 +407,7 @@ def save(request, pk):
     except:
         return Http404
     
+    reset = []
     result = []
     errors = []
     abnormal = {}
@@ -405,29 +420,32 @@ def save(request, pk):
     for stringidField, value in data.iteritems():
         stringid = value['stringid']
         field = value['field']
-        
+
         languagestring = PRODUCTS["{0}_{1}".format(document.name, document.category)].objects.get(pk=stringid)
         translation = getattr(languagestring, field)
-        if (translation != value['before']):
-            # field value has been changed... must be verified
-            abnormal[stringid] = value
-            abnormal[stringid]['server'] = translation
-            continue
-
-        if (translation == value['after']):
-            continue
-        
-        # validate html
-        value['parsed'], err = validateHTMLFragment(value['after'])
-        if (err):
-            logger.error('[ERROR] HTML Validation: "%s"' % err)
-            value['reason'] = err;
-            errors.append(value)
+        if type(translation) == datetime.datetime:
+            value['after'] = '{}'.format(timezone.now())
+            reset.append(value)
         else:
-            result.append(value)        
-    
+            if (translation != value['before']):
+                # field value has been changed... must be verified
+                abnormal[stringid] = value
+                abnormal[stringid]['server'] = translation
+                continue
+            if (translation == value['after']):
+                continue
+            # validate html
+            value['parsed'], err = validateHTMLFragment(value['after'])
+            if (err):
+                logger.error('[ERROR] HTML Validation: "%s"' % err)
+                value['reason'] = err;
+                errors.append(value)
+            else:
+                result.append(value)        
+        logger.info('Response: "%s"' % value);
     context = {
         'data': result,
+        'reset': reset,
         'error': errors,
         'product': pk,
     }

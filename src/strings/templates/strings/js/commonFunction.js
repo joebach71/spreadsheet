@@ -5,21 +5,22 @@ var active=false;
 var hTables = {};
 var tempData = {};
 var title;
+var confirmResetHandsonTable;
 var confirmHandsonTable;
 var badHtmlHandsonTable;
 var savedHandsonTable;
-var mainPanel;
-var confirmPanel;
-var badHtmlPanel;
-var savedPanel;
-var notSavedPanel;
+var hotNotSavedTable;
 var productId;
 var save;
 var confirm;
 var cancel;
 var days;
 var language;
-var hotConfirm;
+var hotBadElem;
+var hotConfirmElem;
+var hotResetElem;
+var hotSavedElem;
+var hotNotSavedElem;
 
 function getCookie(name) {
   var cookieValue = null;
@@ -38,20 +39,22 @@ function getCookie(name) {
 }
 function confirm() {
   // save all cell's data
-  var tablename = $("#tablename").val();
-  var url = '/localtext/products/'+$("#productId").val()+'/confirm';
+  const tablename = $("#tablename").val();
+  const url = '/localtext/products/'+$("#productId").val()+'/confirm';
+  const save = hotConfirmElem.getData();
+  const reset = hotResetElem.getData();
   $.ajax({
     url,
     type: 'POST',
-    data: JSON.stringify(hotConfirm.getData()),
+    data: JSON.stringify(save.concat(reset)),
     "beforeSend": function(xhr, settings) {
       $.ajaxSettings.beforeSend(xhr, settings);
     },
     success: function (results) {
       showTab(document.getElementById('tab-review'));
       // update page loads
-      hotSavedTable.loadData(results.saved);
-      hotNotSavedTable.loadData(results.notSaved);
+      hotSavedElem.loadData(results.saved);
+      hotNotSavedElem.loadData(results.notSaved);
     },
     error: function(error) {
       alert("Error: " + error.statusText);
@@ -71,14 +74,15 @@ function save(elem, pk, product, category) {
       $.ajaxSettings.beforeSend(xhr, settings);
     },
     success: function (results) {
-      var tab = document.getElementById('tab-saving');
-      showTab(tab);
-      hotConfirm.loadData(results.data);
-      if (!results.data.length) {
+      if (!results.data.length && !results.reset.length) {
         $("#confirm").hide();
       }
+      var tab = document.getElementById('tab-saving');
+      showTab(tab);
       // 4. errors
-      hotBadHtml.loadData(results.error);
+      hotConfirmElem.loadData(results.data);
+      hotResetElem.loadData(results.reset);
+      hotBadElem.loadData(results.error);
       $("#productId").val(results.product);
       $("#tablename").val(category);
     },
@@ -271,15 +275,16 @@ function editedCellRenderer(instance, td, row, col, prop, value, cellProperties)
 Handsontable.renderers.registerRenderer('editedCellRenderer', editedCellRenderer);
 function customCellRenderer(instance, td, row, col, prop, value, cellProperties) {
   Handsontable.renderers.TextRenderer.apply(this, arguments);
-  if (col === 5 && {% if editEnglish %}false{% else %}true{%endif %}) {
-    return;
-  }
   if (!value || value === '') {
-    td.style.background = '#EEEEEE';
+    td.style.background = 'silver';
     return;
   }
   if (col > 4 && !hiddenColumns.includes(col) && new Date(instance.getDataAtCell(row, col + 1)) <= new Date(instance.getDataAtCell(row, 4)) ) {
-    td.style.background = '#FF0000';
+    td.style.background = 'red';
+  }
+  if (cellProperties.isModified === true) {
+    td.style.background = 'blue';
+    td.style.color = 'white';
   }
 };
 Handsontable.renderers.registerRenderer('customCellRenderer', customCellRenderer);
@@ -288,7 +293,15 @@ function plainRenderer(instance, td, row, col, prop, value, cellProperties) {
   td.className = 'plain';
 };
 Handsontable.renderers.registerRenderer('plainRenderer', plainRenderer);
-
+function scrubRenderer(instance, td, row, col, prop, value, cellProperties) {
+  Handsontable.renderers.TextRenderer.apply(this, arguments);
+  const pattern = new RegExp(/(\w+)_modified_at/, 'i');
+  const m = pattern.exec(value);
+  if (m) {
+    td.innerHTML = m[1];
+  }
+};
+Handsontable.renderers.registerRenderer('scrubRenderer', scrubRenderer);
 function encodeQueryData(data) {
   var ret = [];
   for (let d in data)

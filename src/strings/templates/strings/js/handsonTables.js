@@ -4,15 +4,11 @@ var $$ = function(id) {
 title = $$('title'),
 // handson tables
 confirmHandsonTable = $$('confirmHandsonTable'),
+confirmResetHandsonTable = $$('confirmResetHandsonTable'),
 badHtmlHandsonTable = $$('badHtmlHandsonTable'),
 savedHandsonTable = $$('savedHandsonTable'),
 notSavedHandsonTable = $$('notSavedHandsonTable'),
-// panels
-mainPanel = $$('mainPanel'),
-confirmPanel = $$('confirmPanel'),
-badHtmlPanel = $$('badHtmlPanel'),
-savedPanel = $$('savedPanel'),
-notSavedPanel = $$('notSavedPanel'),
+
 productId = $$('productId'),
 save = $$('save'),
 confirm = $$('confirm'),
@@ -26,7 +22,7 @@ $('input:file').change(function(){
   } 
 });
 
-hotSavedTable = new Handsontable(savedHandsonTable, {
+hotSavedElem = new Handsontable(savedHandsonTable, {
   colHeaders: ['ID', 'Language', 'Before', 'After'],
   rowHeaders: true,
   manualColumnResize: [300, 100, 300, 300],
@@ -56,8 +52,7 @@ hotSavedTable = new Handsontable(savedHandsonTable, {
     },
   ]
 });
-
-hotNotSavedTable = new Handsontable(notSavedHandsonTable, {
+hotNotSavedElem = new Handsontable(notSavedHandsonTable, {
   colHeaders: ['ID', 'Language', 'Before', 'After', 'Errors'],
   rowHeaders: true,
   manualColumnResize: [300, 100, 200, 200, 200],
@@ -93,7 +88,7 @@ hotNotSavedTable = new Handsontable(notSavedHandsonTable, {
   ]
 });
 
-hotBadHtml = new Handsontable(badHtmlHandsonTable, {
+hotBadElem = new Handsontable(badHtmlHandsonTable, {
   colHeaders: ['ID', 'Language', 'Before', 'After', 'Reason'],
   rowHeaders: true,
   manualColumnResize: [300, 100, 200, 200, 200],
@@ -128,8 +123,37 @@ hotBadHtml = new Handsontable(badHtmlHandsonTable, {
     }
   ]
 });
+hotResetElem = new Handsontable(confirmResetHandsonTable, {
+  colHeaders: ['ID', 'Language', 'Previous', 'Timestamp'],
+  rowHeaders: true,
+  manualColumnResize: [300, 100, 300],
+  manualRowResize: true,
+  fixedColumnsLeft: 1,
+  stretchH: 'last',
+  preventOverflow: 'horizontal',
+  currentRowClassName: 'currentRow',
+  columns: [
+    {
+      data: 'stringid',
+      readOnly: true,
+    },
+    {
+      data: 'field',
+      readOnly: true,
+      renderer: 'scrubRenderer'
+    },
+    {
+      data: 'before',
+      readOnly: true,
+    }, 
+    {
+      data: 'after',
+      readOnly: true,
+    }
+  ]
+});
 
-hotConfirm = new Handsontable(confirmHandsonTable, {
+hotConfirmElem = new Handsontable(confirmHandsonTable, {
   colHeaders: ['ID', 'Language', 'Before', 'After'],
   rowHeaders: true,
   manualColumnResize: true,
@@ -206,19 +230,7 @@ hTables["{{ product.category }}"] = new Handsontable($$('handsonTable_'+ "{{ pro
   preventOverflow: 'both',
   currentRowClassName: 'currentRow',
   columnSorting: true,
-  beforeColumnSort: function (col, order) {
-    sortTable('{{ product.category }}', col, order, function() {
-      return false;
-    });
-  },
   sortIndicator: true,
-  cells: function (row, col, prop) {
-    var cellProperties = {};
-    if (col > 2) {
-      cellProperties.renderer = "customCellRenderer";
-    }
-    return cellProperties;
-  },
   columns: [
     {
       data: 'stringid',
@@ -234,14 +246,16 @@ hTables["{{ product.category }}"] = new Handsontable($$('handsonTable_'+ "{{ pro
     },
     {
       data: 'Korea',
-      {% if not editKorea %}readOnly: true{% endif %}
+      {% if editKorea %}renderer: "customCellRenderer"
+      {% else %}readOnly: true{% endif %}
     },
     {
       data: 'Korea_modified_at'
     },
     {
       data: 'English',
-      {% if not editEnglish %}readOnly: true{% endif %}
+      {% if editEnglish %}renderer: "customCellRenderer"
+      {% else %}readOnly: true{% endif %}
     },
     {
       data: 'English_modified_at'
@@ -249,38 +263,56 @@ hTables["{{ product.category }}"] = new Handsontable($$('handsonTable_'+ "{{ pro
     {% for name in publishers %}
     ,{
       data: '{{ name }}',
+      renderer: "customCellRenderer"
     },
     {
       data: '{{ name }}_modified_at'
     }
     {% endfor %}
   ],
-  afterChange: function (change, source) {
+  afterSelection: function(row, col, row2, col2) {
+    const instance = this;
+    const skip = instance.propToCol('Korea');
+    const after = new Date().toISOString();
+    for (let i = row; i <= row2; i++) {
+      for (let j = col; j <= col2; j+=2) {
+        if (skip >= j) continue;
+        const field = instance.colToProp(j+1);
+        const stringid = instance.getDataAtCell(i, 0);
+        const before = instance.getDataAtCell(i, j+1);
+        instance.setDataAtCell(i, j+1, after);
+        if (instance.getDataAtCell(i, j) !== '') {
+          tempData["{{ product.category }}"][`${stringid}.${field}`] = { stringid, field, before, after };
+        }
+      }
+    }
+  },
+  afterChange: function(changes, source) {
     if (source === 'loadData') {
       return; //don't save this change
     }
-    if (change !== null) {
-      var instance = this;
-      $(change).each(function () {
-        // change the color of edited cell
-        // changedData = [row, col, before, after]
-        var changedData = this;
-        if (changedData[2] === changedData[3]) {
-          return; // don't do anything is no change
-        }
-        var cell = instance.getCell(changedData[0], instance.propToCol(changedData[1]));
-        if (cell) {
-          cell.style.color = '#0000FF';
-        }
-        // replace the row with stringid
-        var stringid = instance.getDataAtCell(changedData[0], 0);
-        if (tempData["{{ product.category }}"][stringid+'.'+changedData[1]]) {
-          changedData[2] = tempData["{{ product.category }}"][stringid+'.'+changedData[1]]['before'];
-        }
-        // should change the color of cell???
-        tempData["{{ product.category }}"][stringid+'.'+changedData[1]] = { 'stringid': stringid, 'field': changedData[1], 'before': changedData[2], 'after': changedData[3] };
-      });
-    }
+    //"changes" is a 2D array
+    const instance = this;
+    changes.forEach(([row, prop, before, after]) => {
+      const col = instance.propToCol(prop);
+      if (hiddenColumns.includes(col)) {
+        return;
+      }
+      if (before === after) {
+        return; // don't do anything is no change
+      }
+      //mark cell as modified
+      const cellProperties = instance.getCellMeta(row, col);
+      cellProperties.isModified = true;
+      // store changed data
+      const stringid = instance.getDataAtCell(row, 0);
+      if (tempData["{{ product.category }}"][`${stringid}.${prop}`]) {
+        before = tempData["{{ product.category }}"][`${stringid}.${prop}`]['before'];
+      }
+      // should change the color of cell???
+      tempData["{{ product.category }}"][`${stringid}.${prop}`] = { stringid, field: prop, before, after };
+    });
+    instance.render();
   }
 });
 {% endfor %}
