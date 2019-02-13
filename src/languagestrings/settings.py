@@ -29,7 +29,7 @@ if os.environ.get('DEBUG_LOG_LEVEL'):
 ALLOWED_HOSTS = ['*']
 
 # Application definition
-APP_NAME = 'BETAGO'
+APP_NAME = 'SPREADSHEET'
 VERSION = "1.8.0-dev"
 DESCRIPTION = "Localization Text Management Application"
 
